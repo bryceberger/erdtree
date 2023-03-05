@@ -74,6 +74,9 @@ pub enum Order {
     /// Sort entries by file name
     Name,
 
+    /// Sort entries by name, with directories appearing before files
+    Dir,
+
     /// Sort entries by size in descending order
     Size,
 

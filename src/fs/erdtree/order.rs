@@ -1,14 +1,12 @@
-use crate::cli;
 use super::node::Node;
-use std::{
-    convert::From,
-    cmp::Ordering,
-};
+use crate::cli;
+use std::{cmp::Ordering, convert::From};
 
 /// Order in which to print nodes.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Order {
     Name,
+    Dir,
     Size,
     None,
 }
@@ -18,6 +16,7 @@ impl Order {
     pub fn comparator(&self) -> Option<fn(a: &Node, b: &Node) -> Ordering> {
         match self {
             Self::Name => Some(Self::name_comparator),
+            Self::Dir => Some(Self::name_dir_first_comparator),
             Self::Size => Some(Self::size_comparator),
             _ => None,
         }
@@ -26,6 +25,15 @@ impl Order {
     /// Comparator based on `Node` file names.
     fn name_comparator(a: &Node, b: &Node) -> Ordering {
         a.file_name().cmp(b.file_name())
+    }
+
+    /// Comparator based on `Node` file names, with directories appearing before files
+    fn name_dir_first_comparator(a: &Node, b: &Node) -> Ordering {
+        match (a.is_dir(), b.is_dir()) {
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (true, true) | (false, false) => a.file_name().cmp(b.file_name()),
+        }
     }
 
     /// Comparator based on `Node` file sizes
@@ -41,8 +49,9 @@ impl From<cli::Order> for Order {
     fn from(ord: cli::Order) -> Self {
         match ord {
             cli::Order::Name => Order::Name,
+            cli::Order::Dir => Order::Dir,
             cli::Order::Size => Order::Size,
-            cli::Order::None => Order::None
+            cli::Order::None => Order::None,
         }
     }
 }
